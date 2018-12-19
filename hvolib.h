@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 #include <DHT.h>
-#include <aREST.h>
+#include <hvorest.h>
 
 struct dhts {
   uint8_t id;
@@ -25,8 +25,8 @@ class HVOLib {
       return &instance;
     }
 
-    static aREST* getRest() {
-      static aREST rest_;
+    static HVORest* getRest() {
+      static HVORest rest_;
       return &rest_;
     }
 
@@ -37,13 +37,16 @@ class HVOLib {
     void addVoltagePin(uint8_t id, uint8_t pin);
     void addDHTDevice(uint8_t id, uint8_t ptr);
 
-    static uint8_t getAllSensors(String command);
-    static uint8_t get48v(String command);
-    static uint8_t getAmps(String command);
-    static uint8_t getCurrent(String command);
-    static uint8_t getHumidity(String command);
-    static uint8_t getTemp(String commnad);
-    static uint8_t getVoltage(String command);
+    static uint8_t getAnalog(uint8_t pinNum);
+    static uint8_t getDigital(uint8_t pinNum);
+
+    static uint8_t getAllSensors(uint8_t id);
+    static uint8_t get48v(uint8_t id);
+    static uint8_t getAmps(uint8_t id);
+    static uint8_t getCurrent(uint8_t id);
+    static uint8_t getHumidity(uint8_t id);
+    static uint8_t getTemp(uint8_t id);
+    static uint8_t getVoltage(uint8_t id);
 
   private:
     uint8_t n48v_;
@@ -70,7 +73,6 @@ class HVOLib {
     uint8_t getPin(uint8_t id, uint8_t sz, Pins* arr);
     DHT getDHTDevice(uint8_t v);
 
-    static char* ftoa(char* a, double f, uint8_t precision);
     static bool startsWith(const char* str, const char* pre);
 };
 

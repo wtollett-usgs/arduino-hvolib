@@ -39,54 +39,57 @@ void HVOLib::addVoltagePin(uint8_t id, uint8_t pin) {
   voltPins_[voltIndex_++].pin = pin;
 }
 
-static uint8_t HVOLib::get48v(String command) {
-  char str[10];
-  uint8_t id = atoi(command.c_str());
+static uint8_t HVOLib::getAnalog(uint8_t pinNum) {
+  getRest()->addData("Value", analogRead(pinNum));
+  getRest()->addData("PinNumber", pinNum);
+}
+
+static uint8_t HVOLib::getDigital(uint8_t pinNum) {
+  getRest()->addData("Value", digitalRead(pinNum));
+  getRest()->addData("PinNumber", pinNum);
+}
+
+static uint8_t HVOLib::get48v(uint8_t id) {
+  char str[10] = { 0 };
 
   uint8_t pin = getInstance()->get48vPin(id);
   int val = analogRead(pin);
   float temp = (val * 5.89035e-02) + 5.39413e-02;
-
-  getRest()->addToBuffer(F("\"48v"));
-  getRest()->addToBuffer(id);
-  getRest()->addToBuffer(F("\": "));
-  ftoa(str, temp, 2);
-  getRest()-> addToBuffer(str);
-  getRest()->addToBuffer(F(", "));
+  sprintf(str, "48v%d", id);
+  getRest()->addData(str, temp, 2);
 
   return val;
 }
 
-static uint8_t HVOLib::getAllSensors(String command) {
+static uint8_t HVOLib::getAllSensors(uint8_t id) {
   // Temp
   for (uint8_t i = 0; i < getInstance()->nDHTs_; i++) {
-    getTemp(String(i+1));
+    getTemp(i+1);
   }
 
   // 48v
   for (uint8_t i = 0; i < getInstance()->n48v_; i++) {
-    get48v(String(i+1));
+    get48v(i+1);
   }
 
   // Amps
   for (uint8_t i = 0; i < getInstance()->nCurrent_; i++) {
-    getAmps(String(i+1));
+    getAmps(i+1);
   }
 
   // Voltage
   for (uint8_t i = 0; i < getInstance()->nVolt_; i++) {
-    getVoltage(String(i+1));
+    getVoltage(i+1);
   }
 
   // Temp
   for (uint8_t i = 0; i < getInstance()->nDHTs_; i++) {
-    getHumidity(String(i+1));
+    getHumidity(i+1);
   }
 }
 
-static uint8_t HVOLib::getAmps(String command) {
-  char str[10];
-  uint8_t id = atoi(command.c_str());
+static uint8_t HVOLib::getAmps(uint8_t id) {
+  char str[10] = { 0 };
 
   uint8_t pin = getInstance()->getCurrentPin(id);
   float v = 0.0;
@@ -96,84 +99,55 @@ static uint8_t HVOLib::getAmps(String command) {
   }
   v = v / 500;
 
-  getRest()->addToBuffer(F("\"amps"));
-  getRest()->addToBuffer(id);
-  getRest()->addToBuffer(F("\": "));
-  ftoa(str, v, 3);
-  getRest()->addToBuffer(str);
-  getRest()->addToBuffer(F(", "));
+  sprintf(str, "amps%d", id);
+  getRest()->addData(str, v, 3);
 
   return pin;
 }
 
-static uint8_t HVOLib::getCurrent(String command) {
-  char str[10];
-  uint8_t id = atoi(command.c_str());
+static uint8_t HVOLib::getCurrent(uint8_t id) {
+  char str[10] = { 0 };
 
   uint8_t pin = getInstance()->getCurrentPin(id);
   int val = analogRead(pin);
   float v = val * (5.0 / 1023.0);
 
-  getRest()->addToBuffer(F("\"current"));
-  getRest()->addToBuffer(id);
-  getRest()->addToBuffer(F("\": "));
-  ftoa(str, v, 3);
-  getRest()->addToBuffer(str);
-  getRest()->addToBuffer(F(", "));
+  sprintf(str, "current%d", id);
+  getRest()->addData(str, v, 3);
 
   return val;
 }
 
-static uint8_t HVOLib::getHumidity(String command) {
-  char str[10];
-  uint8_t id = atoi(command.c_str());
-
-  getRest()->addToBuffer(F("\"humidity"));
-  getRest()->addToBuffer(id);
-  getRest()->addToBuffer(F("\": "));
+static uint8_t HVOLib::getHumidity(uint8_t id) {
+  char str[10] = { 0 };
 
   DHT d = getInstance()->getDHTDevice(id);
-  float val = d.getHumidity();
-  ftoa(str, val, 2);
-  getRest()->addToBuffer(str);
-  getRest()->addToBuffer(F(", "));
+  sprintf(str, "humidity%d", id);
+  getRest()->addData(str, d.getHumidity(), 2);
 
   return 1;
 }
 
-static uint8_t HVOLib::getTemp(String command) {
-  char str[10];
-  uint8_t id = atoi(command.c_str());
-
-  getRest()->addToBuffer(F("\"temp"));
-  getRest()->addToBuffer(id);
-  getRest()->addToBuffer(F("\": "));
+static uint8_t HVOLib::getTemp(uint8_t id) {
+  char str[10] = { 0 };
 
   DHT d = getInstance()->getDHTDevice(id);
   delay(d.getMinimumSamplingPeriod());
-  ftoa(str, d.getTemperature(), 2);
-
-  getRest()->addToBuffer(str);
-  getRest()->addToBuffer(F(", "));
+  sprintf(str, "temp%d", id);
+  getRest()->addData(str, d.getTemperature(), 2);
 
   return 1;
 }
 
-static uint8_t HVOLib::getVoltage(String command) {
-  char str[10];
-  uint8_t id = atoi(command.c_str());
+static uint8_t HVOLib::getVoltage(uint8_t id) {
+  char str[10] = { 0 };
 
   uint8_t pin = getInstance()->getVoltagePin(id);
   int val = analogRead(pin);
   float temp = val / 4.092;
   temp = fmod(temp, 1000);
-
-  getRest()->addToBuffer(F("\"voltage"));
-  getRest()->addToBuffer(id);
-  getRest()->addToBuffer(F("\": "));
-  ftoa(str, temp/10, 2);
-  getRest()->addToBuffer(str);
-  getRest()->addToBuffer(F(", "));
+  sprintf(str, "voltage%d", id);
+  getRest()->addData(str, temp/10, 2);
 
   return val;
 }
@@ -217,19 +191,6 @@ DHT HVOLib::getDHTDevice(uint8_t v) {
       return dhtDevices_[i].dhtInstance;
     }
   }
-}
-
-static char* HVOLib::ftoa(char* a, double f, uint8_t precision) {
-  long p[] = {0,10,100,1000,10000,100000,1000000,10000000,100000000};
-
-  char* ret = a;
-  long heiltal = (long)f;
-  itoa(heiltal, a, 10);
-  while (*a != '\0') a++;
-  *a++ = '.';
-  long desimal = abs((long)((f - heiltal) * p[precision]));
-  itoa(desimal, a, 10);
-  return ret;
 }
 
 static bool HVOLib::startsWith(const char* str, const char* pre) {

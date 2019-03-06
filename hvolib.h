@@ -2,6 +2,7 @@
 #define hvolib_h
 
 #include "Arduino.h"
+#include <avr/wdt.h>
 #include <DHT.h>
 #include <hvorest.h>
 

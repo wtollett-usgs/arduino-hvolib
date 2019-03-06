@@ -62,10 +62,16 @@ static uint8_t HVOLib::get48v(uint8_t id) {
 }
 
 static uint8_t HVOLib::getAllSensors(uint8_t id) {
-  // Temp
+  // Temp & Humidity
   for (uint8_t i = 0; i < getInstance()->nDHTs_; i++) {
     getTemp(i+1);
+    getHumidity(i+1);
   }
+
+  // Given enough DHT sensors, these could take so much
+  // time that a watchdog reset is necessary in order to
+  // keep everything running.
+  wdt_reset();
 
   // 48v
   for (uint8_t i = 0; i < getInstance()->n48v_; i++) {
@@ -82,10 +88,6 @@ static uint8_t HVOLib::getAllSensors(uint8_t id) {
     getVoltage(i+1);
   }
 
-  // Temp
-  for (uint8_t i = 0; i < getInstance()->nDHTs_; i++) {
-    getHumidity(i+1);
-  }
 }
 
 static uint8_t HVOLib::getAmps(uint8_t id) {
@@ -122,6 +124,7 @@ static uint8_t HVOLib::getHumidity(uint8_t id) {
   char str[10] = { 0 };
 
   DHT d = getInstance()->getDHTDevice(id);
+  delay(d.getMinimumSamplingPeriod());
   sprintf(str, "humidity%d", id);
   getRest()->addData(str, d.getHumidity(), 2);
 
